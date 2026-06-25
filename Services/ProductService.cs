@@ -10,24 +10,27 @@ public class ProductService(AppDbContext db) : IProductService
     {
         return await db.Products
             .OrderBy(p => p.Id)
-            .Select(p => new ProductResponseDto(p.Id, p.Name, p.Sku, p.Quantity, p.MinQuantity, p.CreatedAt))
+            .Select(p => new ProductResponseDto(p.Id, p.Name, p.Sku, p.Quantity, p.MinQuantity, p.CreatedAt, p.Category.Name))
             .ToListAsync();
     }
 
     public async Task<ProductResponseDto?> GetByIdAsync(int id)
     {
-        var product = await db.Products.FindAsync(id);
-        if (product is null) return null;
-
-        return new ProductResponseDto(product.Id, product.Name, product.Sku, product.Quantity, product.MinQuantity, product.CreatedAt);
+        return await db.Products
+             .Where(p => p.Id == id)
+             .Select(p => new ProductResponseDto(p.Id, p.Name, p.Sku, p.Quantity, p.MinQuantity, p.CreatedAt, p.Category.Name))
+             .FirstOrDefaultAsync();
     }
 
     public async Task<ProductResponseDto> CreateAsync(CreateProductDto dto)
     {
-        var product = new Product { Name = dto.Name, Sku = dto.Sku, Quantity = dto.Quantity, MinQuantity = dto.MinQuantity };
+        var product = new Product { Name = dto.Name, Sku = dto.Sku, Quantity = dto.Quantity, MinQuantity = dto.MinQuantity, CategoryId = dto.CategoryId };
         db.Products.Add(product);
         await db.SaveChangesAsync();
-        return new ProductResponseDto(product.Id, product.Name, product.Sku, product.Quantity, product.MinQuantity, product.CreatedAt);
+
+        var categoryName = await db.Categories.Where(c => c.Id == product.CategoryId).Select(c => c.Name).FirstAsync();
+
+        return new ProductResponseDto(product.Id, product.Name, product.Sku, product.Quantity, product.MinQuantity, product.CreatedAt, categoryName);
     }
 
     public async Task<bool> UpdateAsync(int id, CreateProductDto dto)
@@ -39,6 +42,8 @@ public class ProductService(AppDbContext db) : IProductService
         product.Sku = dto.Sku;
         product.Quantity = dto.Quantity;
         product.MinQuantity = dto.MinQuantity;
+        product.CategoryId = dto.CategoryId;
+
 
         await db.SaveChangesAsync();
         return true;
