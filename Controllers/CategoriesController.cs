@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WarehouseApi.Models;
 using WarehouseApi.Services;
@@ -6,6 +7,7 @@ namespace WarehouseApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class CategoriesController(ICategoryService service) : ControllerBase
 {
 

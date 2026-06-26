@@ -18,4 +18,8 @@ public class Product
 
     public List<StockMovement> Movements { get; set; } = new();
 
+    public int WarehouseId { get; set; }
+
+    public Warehouse Warehouse { get; set; } = null!;
+
 }

@@ -1,11 +1,17 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WarehouseApi.Models;
 using WarehouseApi.Services;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace WarehouseApi.Controllers;
 
+
+
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class ProductsController(IProductService service, IStockMovementService movementService) : ControllerBase
 {
 
@@ -80,6 +86,19 @@ public class ProductsController(IProductService service, IStockMovementService m
                 return BadRequest();
         }
 
+    }
+
+    private int GetUserId()
+    {
+        var sub = User.FindFirstValue(ClaimTypes.NameIdentifier)
+                  ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+        return int.Parse(sub!);
+    }
+
+    [HttpGet("whoami")]
+    public IActionResult WhoAmI()
+    {
+        return Ok(new { userId = GetUserId() });
     }
 
 }

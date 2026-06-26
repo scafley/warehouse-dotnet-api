@@ -24,7 +24,7 @@ public class ProductService(AppDbContext db) : IProductService
 
     public async Task<ProductResponseDto> CreateAsync(CreateProductDto dto)
     {
-        var product = new Product { Name = dto.Name, Sku = dto.Sku, Quantity = dto.Quantity, MinQuantity = dto.MinQuantity, CategoryId = dto.CategoryId };
+        var product = new Product { Name = dto.Name, Sku = dto.Sku, Quantity = dto.Quantity, MinQuantity = dto.MinQuantity, CategoryId = dto.CategoryId, WarehouseId = dto.WarehouseId };
         db.Products.Add(product);
         await db.SaveChangesAsync();
 
