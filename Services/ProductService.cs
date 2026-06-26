@@ -10,7 +10,7 @@ public class ProductService(AppDbContext db) : IProductService
     {
         return await db.Products
             .OrderBy(p => p.Id)
-            .Select(p => new ProductResponseDto(p.Id, p.Name, p.Sku, p.Quantity, p.MinQuantity, p.CreatedAt, p.Category.Name))
+            .Select(p => new ProductResponseDto(p.Id, p.Name, p.Sku, p.Quantity, p.MinQuantity, p.CreatedAt, p.Category.Name, p.Quantity < p.MinQuantity))
             .ToListAsync();
     }
 
@@ -18,7 +18,7 @@ public class ProductService(AppDbContext db) : IProductService
     {
         return await db.Products
              .Where(p => p.Id == id)
-             .Select(p => new ProductResponseDto(p.Id, p.Name, p.Sku, p.Quantity, p.MinQuantity, p.CreatedAt, p.Category.Name))
+             .Select(p => new ProductResponseDto(p.Id, p.Name, p.Sku, p.Quantity, p.MinQuantity, p.CreatedAt, p.Category.Name, p.Quantity < p.MinQuantity))
              .FirstOrDefaultAsync();
     }
 
@@ -30,7 +30,7 @@ public class ProductService(AppDbContext db) : IProductService
 
         var categoryName = await db.Categories.Where(c => c.Id == product.CategoryId).Select(c => c.Name).FirstAsync();
 
-        return new ProductResponseDto(product.Id, product.Name, product.Sku, product.Quantity, product.MinQuantity, product.CreatedAt, categoryName);
+        return new ProductResponseDto(product.Id, product.Name, product.Sku, product.Quantity, product.MinQuantity, product.CreatedAt, categoryName, product.Quantity < product.MinQuantity);
     }
 
     public async Task<bool> UpdateAsync(int id, CreateProductDto dto)

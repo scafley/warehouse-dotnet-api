@@ -6,7 +6,7 @@ namespace WarehouseApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ProductsController(IProductService service) : ControllerBase
+public class ProductsController(IProductService service, IStockMovementService movementService) : ControllerBase
 {
 
     [HttpGet]
@@ -52,4 +52,34 @@ public class ProductsController(IProductService service) : ControllerBase
         var deleted = await service.DeleteAsync(id);
         return deleted ? NoContent() : NotFound();
     }
+
+    [HttpGet("{id:int}/movements")]
+    public async Task<IActionResult> GetMovements(int id)
+    {
+        var movements = await movementService.GetMovementsAsync(id);
+        return Ok(movements);
+    }
+
+    [HttpPost("{id:int}/movements")]
+    public async Task<IActionResult> CreateMovement(int id, CreateMovementDto dto)
+    {
+        var res = await movementService.CreateMovementAsync(id, dto);
+
+        if (res.Success)
+        {
+            return CreatedAtAction(nameof(GetMovements), new { id }, res.Movement);
+        }
+
+        switch (res.Error)
+        {
+            case ("NotFound"):
+                return NotFound();
+            case ("InsufficientStock"):
+                return BadRequest("Niewystarczający stan magazynowy");
+            default:
+                return BadRequest();
+        }
+
+    }
+
 }
