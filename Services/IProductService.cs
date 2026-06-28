@@ -4,10 +4,10 @@ namespace WarehouseApi.Services;
 
 public interface IProductService
 {
-    Task<List<ProductResponseDto>> GetAllAsync();
-    Task<ProductResponseDto?> GetByIdAsync(int id);
-    Task<ProductResponseDto> CreateAsync(CreateProductDto dto);
+    Task<List<ProductResponseDto>> GetAllAsync(int userId, int? warehouseId);
+    Task<ProductResponseDto?> GetByIdAsync(int userId, int id);
+    Task<ProductResponseDto?> CreateAsync(int userId, CreateProductDto dto);
 
-    Task<bool> UpdateAsync(int id, CreateProductDto dto);
-    Task<bool> DeleteAsync(int id);
+    Task<bool> UpdateAsync(int userId, int id, CreateProductDto dto);
+    Task<bool> DeleteAsync(int userId, int id);
 }

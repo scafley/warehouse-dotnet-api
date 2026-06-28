@@ -6,24 +6,36 @@ namespace WarehouseApi.Services;
 
 public class ProductService(AppDbContext db) : IProductService
 {
-    public async Task<List<ProductResponseDto>> GetAllAsync()
+    public async Task<List<ProductResponseDto>> GetAllAsync(int userId, int? warehouseId)
     {
-        return await db.Products
+
+        var query = db.Products.Where(p => db.UserWarehouses.Any(uw => uw.UserId == userId && uw.WarehouseId == p.WarehouseId));
+
+        if (warehouseId is not null)
+        {
+            query = query.Where(p => p.WarehouseId == warehouseId);
+        }
+
+        return await query
             .OrderBy(p => p.Id)
             .Select(p => new ProductResponseDto(p.Id, p.Name, p.Sku, p.Quantity, p.MinQuantity, p.CreatedAt, p.Category.Name, p.Quantity < p.MinQuantity))
             .ToListAsync();
     }
 
-    public async Task<ProductResponseDto?> GetByIdAsync(int id)
+    public async Task<ProductResponseDto?> GetByIdAsync(int userId, int id)
     {
         return await db.Products
-             .Where(p => p.Id == id)
+             .Where(p => p.Id == id && db.UserWarehouses.Any(uw => uw.UserId == userId && uw.WarehouseId == p.WarehouseId))
              .Select(p => new ProductResponseDto(p.Id, p.Name, p.Sku, p.Quantity, p.MinQuantity, p.CreatedAt, p.Category.Name, p.Quantity < p.MinQuantity))
              .FirstOrDefaultAsync();
     }
 
-    public async Task<ProductResponseDto> CreateAsync(CreateProductDto dto)
+    public async Task<ProductResponseDto?> CreateAsync(int userId, CreateProductDto dto)
     {
+
+        var hasAccess = await db.UserWarehouses.AnyAsync(uw => uw.UserId == userId && uw.WarehouseId == dto.WarehouseId);
+        if (!hasAccess) return null;
+
         var product = new Product { Name = dto.Name, Sku = dto.Sku, Quantity = dto.Quantity, MinQuantity = dto.MinQuantity, CategoryId = dto.CategoryId, WarehouseId = dto.WarehouseId };
         db.Products.Add(product);
         await db.SaveChangesAsync();
@@ -33,9 +45,9 @@ public class ProductService(AppDbContext db) : IProductService
         return new ProductResponseDto(product.Id, product.Name, product.Sku, product.Quantity, product.MinQuantity, product.CreatedAt, categoryName, product.Quantity < product.MinQuantity);
     }
 
-    public async Task<bool> UpdateAsync(int id, CreateProductDto dto)
+    public async Task<bool> UpdateAsync(int userId, int id, CreateProductDto dto)
     {
-        var product = await db.Products.FindAsync(id);
+        var product = await db.Products.FirstOrDefaultAsync(p => p.Id == id && db.UserWarehouses.Any(uw => uw.UserId == userId && uw.WarehouseId == p.WarehouseId));
         if (product is null) return false;
 
         product.Name = dto.Name;
@@ -49,9 +61,9 @@ public class ProductService(AppDbContext db) : IProductService
         return true;
     }
 
-    public async Task<bool> DeleteAsync(int id)
+    public async Task<bool> DeleteAsync(int userId, int id)
     {
-        var product = await db.Products.FindAsync(id);
+        var product = await db.Products.FirstOrDefaultAsync(p => p.Id == id && db.UserWarehouses.Any(uw => uw.UserId == userId && uw.WarehouseId == p.WarehouseId));
         if (product is null) return false;
 
         db.Products.Remove(product);

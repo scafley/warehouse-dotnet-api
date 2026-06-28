@@ -16,15 +16,15 @@ public class ProductsController(IProductService service, IStockMovementService m
 {
 
     [HttpGet]
-    public async Task<IActionResult> GetAll()
+    public async Task<IActionResult> GetAll([FromQuery] int? warehouseId)
     {
-        return Ok(await service.GetAllAsync());
+        return Ok(await service.GetAllAsync(GetUserId(), warehouseId));
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var product = await service.GetByIdAsync(id);
+        var product = await service.GetByIdAsync(GetUserId(), id);
         return product is null ? NotFound() : Ok(product);
     }
 
@@ -36,7 +36,9 @@ public class ProductsController(IProductService service, IStockMovementService m
             return BadRequest("Nazwa jest wymagana");
         }
 
-        var created = await service.CreateAsync(dto);
+        var created = await service.CreateAsync(GetUserId(), dto);
+
+        if (created is null) return BadRequest("Brak dostępu do wskazanego magazynu");
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
     }
 
@@ -48,28 +50,28 @@ public class ProductsController(IProductService service, IStockMovementService m
             return BadRequest("Nazwa jest wymagana");
         }
 
-        var updated = await service.UpdateAsync(id, dto);
+        var updated = await service.UpdateAsync(GetUserId(), id, dto);
         return updated ? NoContent() : NotFound();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var deleted = await service.DeleteAsync(id);
+        var deleted = await service.DeleteAsync(GetUserId(), id);
         return deleted ? NoContent() : NotFound();
     }
 
     [HttpGet("{id:int}/movements")]
     public async Task<IActionResult> GetMovements(int id)
     {
-        var movements = await movementService.GetMovementsAsync(id);
+        var movements = await movementService.GetMovementsAsync(GetUserId(), id);
         return Ok(movements);
     }
 
     [HttpPost("{id:int}/movements")]
     public async Task<IActionResult> CreateMovement(int id, CreateMovementDto dto)
     {
-        var res = await movementService.CreateMovementAsync(id, dto);
+        var res = await movementService.CreateMovementAsync(GetUserId(), id, dto);
 
         if (res.Success)
         {
@@ -95,10 +97,5 @@ public class ProductsController(IProductService service, IStockMovementService m
         return int.Parse(sub!);
     }
 
-    [HttpGet("whoami")]
-    public IActionResult WhoAmI()
-    {
-        return Ok(new { userId = GetUserId() });
-    }
 
 }
