@@ -86,5 +86,3 @@ docker compose down -v
 ## Notes
 
 - **Secrets** are kept out of version control — they live in `.env` (git-ignored and docker-ignored), injected via environment variables.
-- **Business errors** (e.g. insufficient stock, resource not found) are handled through the service layer's result values, not exceptions.
-- **Authorization** is owner-based across the whole domain: every query is scoped to the authenticated user via their warehouses.
